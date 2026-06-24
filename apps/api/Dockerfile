@@ -16,7 +16,6 @@ RUN corepack enable
 
 COPY . .
 COPY --from=builder /app/apps/api/dist apps/api/dist
-COPY --from=builder /app/apps/api/src/generated apps/api/src/generated
 COPY infra/pm2/api.ecosystem.config.cjs infra/pm2/api.ecosystem.config.cjs
 
 RUN yarn install --immutable --production
