@@ -1,0 +1,35 @@
+services:
+  api:
+    build:
+      context: ../..
+      dockerfile: apps/api/Dockerfile
+    container_name: sentinel-api-prod
+    restart: unless-stopped
+    env_file:
+      - ../../apps/api/.env.production
+    ports:
+      - "${API_HOST_PORT:-4000}:4000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: sh -c "npx prisma migrate deploy && node dist/main.js"
+    networks:
+      - sentinel-network
+
+  web:
+    build:
+      context: ../..
+      dockerfile: apps/web/Dockerfile
+    container_name: sentinel-web-prod
+    restart: unless-stopped
+    env_file:
+      - ../../apps/web/.env.production
+    ports:
+      - "${WEB_HOST_PORT:-3000}:3000"
+    depends_on:
+      - api
+    networks:
+      - sentinel-network
+
+networks:
+  sentinel-network:
+    name: sentinel-network

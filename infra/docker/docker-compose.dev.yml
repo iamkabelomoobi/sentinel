@@ -1,0 +1,55 @@
+services:
+  postgres:
+    image: ${POSTGRES_IMAGE:-postgres:16}
+    container_name: ${POSTGRES_CONTAINER_DEV:-sentinel-postgres-dev}
+    restart: unless-stopped
+    ports:
+      - "${POSTGRES_HOST_PORT:-5433}:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DATABASE_NAME:-sentinel}
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USERNAME:-postgres} -d ${POSTGRES_DATABASE_NAME:-sentinel}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: ${REDIS_IMAGE:-redis:7-alpine}
+    container_name: ${REDIS_CONTAINER_DEV:-sentinel-redis-dev}
+    restart: unless-stopped
+    ports:
+      - "${REDIS_HOST_PORT:-6380}:6379"
+    volumes:
+      - redis_data_dev:/data
+    command: ["redis-server", "--appendonly", "yes"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mailhog:
+    image: ${MAILHOG_IMAGE:-mailhog/mailhog}
+    container_name: ${MAILHOG_CONTAINER_DEV:-sentinel-mailhog-dev}
+    restart: unless-stopped
+    ports:
+      - "${MAILHOG_SMTP_HOST_PORT:-1026}:1025"
+      - "${MAILHOG_WEB_HOST_PORT:-8026}:8025"
+
+volumes:
+  postgres_data_dev:
+    name: ${POSTGRES_VOLUME_DEV:-sentinel-postgres-data-dev}
+  redis_data_dev:
+    name: ${REDIS_VOLUME_DEV:-sentinel-redis-data-dev}
+
+networks:
+  default:
+    name: ${APP_NETWORK:-sentinel-network}
