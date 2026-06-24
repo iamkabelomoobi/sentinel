@@ -16,10 +16,10 @@ RUN corepack enable
 COPY --from=builder /app/apps/web/.next/standalone ./
 COPY --from=builder /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=builder /app/apps/web/public ./apps/web/public
-COPY apps/web/ecosystem.config.cjs apps/web/ecosystem.config.cjs
+OPY infra/pm2/web.ecosystem.config.cjs infra/pm2/web.ecosystem.config.cjs
 
 RUN yarn add pm2
 
 EXPOSE 3000
 
-CMD ["yarn", "pm2-runtime", "apps/web/ecosystem.config.cjs"]
+CMD ["yarn", "pm2-runtime", "infra/pm2/web.ecosystem.config.cjs"]

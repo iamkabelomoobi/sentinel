@@ -17,11 +17,12 @@ RUN corepack enable
 COPY . .
 COPY --from=builder /app/apps/api/dist apps/api/dist
 COPY --from=builder /app/apps/api/src/generated apps/api/src/generated
+COPY infra/pm2/api.ecosystem.config.cjs infra/pm2/api.ecosystem.config.cjs
 
 RUN yarn install --immutable --production
 
-WORKDIR /app/apps/api
+WORKDIR /app
 
 EXPOSE 4000
 
-CMD ["yarn", "pm2-runtime", "ecosystem.config.cjs"]
+CMD ["yarn", "pm2-runtime", "infra/pm2/api.ecosystem.config.cjs"]
