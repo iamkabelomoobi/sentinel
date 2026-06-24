@@ -1,6 +1,7 @@
+import 'dotenv/config';
 import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
-import { dash } from "@better-auth/infra";
+import { dash } from '@better-auth/infra';
 import { nextCookies } from 'better-auth/next-js';
 import { adapter } from '../database/prisma.service';
 import { PrismaClient } from '../../generated/prisma/client';
@@ -11,13 +12,16 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: 'postgresql',
   }),
+  emailAndPassword: {
+    enabled: true,
+  },
   session: {
     expiresIn: 60 * 60 * 24 * 7,
     updateAge: 60 * 60 * 24,
   },
   advanced: {
     ipAddress: {
-      ipv6Subnet: 64,
+      ipAddressHeaders: ['x-forwarded-for', 'x-real-ip'],
     },
   },
   rateLimit: {
