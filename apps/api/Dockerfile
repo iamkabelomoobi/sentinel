@@ -18,7 +18,7 @@ COPY . .
 COPY --from=builder /app/apps/api/dist apps/api/dist
 COPY infra/pm2/api.ecosystem.config.cjs infra/pm2/api.ecosystem.config.cjs
 
-RUN yarn install --immutable --production
+RUN yarn workspaces focus api --production
 
 WORKDIR /app
 
