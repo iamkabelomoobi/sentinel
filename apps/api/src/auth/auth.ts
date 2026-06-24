@@ -1,5 +1,6 @@
 import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
+import { dash } from "@better-auth/infra";
 import { nextCookies } from 'better-auth/next-js';
 import { adapter } from '../database/prisma.service';
 import { PrismaClient } from '../../generated/prisma/client';
@@ -24,6 +25,6 @@ export const auth = betterAuth({
     window: 60,
     max: 100,
   },
-  plugins: [nextCookies()],
+  plugins: [nextCookies(), dash()],
   trustedOrigins: [process.env.BETTER_AUTH_URL || 'http://localhost:3000'],
 });
