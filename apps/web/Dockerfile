@@ -16,7 +16,7 @@ RUN corepack enable
 COPY --from=builder /app/apps/web/.next/standalone ./
 COPY --from=builder /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=builder /app/apps/web/public ./apps/web/public
-OPY infra/pm2/web.ecosystem.config.cjs infra/pm2/web.ecosystem.config.cjs
+COPY infra/pm2/web.ecosystem.config.cjs infra/pm2/web.ecosystem.config.cjs
 
 RUN yarn add pm2
 
