@@ -13,6 +13,7 @@ FROM node:22-alpine AS runner
 
 WORKDIR /app
 RUN corepack enable
+RUN yarn global add pm2
 
 COPY . .
 COPY --from=builder /app/apps/api/dist apps/api/dist
@@ -20,8 +21,6 @@ COPY infra/pm2/api.ecosystem.config.cjs infra/pm2/api.ecosystem.config.cjs
 
 RUN yarn workspaces focus api --production
 
-WORKDIR /app
-
 EXPOSE 4000
 
-CMD ["yarn", "pm2-runtime", "infra/pm2/api.ecosystem.config.cjs"]
+CMD ["pm2-runtime", "infra/pm2/api.ecosystem.config.cjs"]
