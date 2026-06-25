@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { existsSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { dirname, normalize, resolve, sep } from 'node:path';
 
 import { hashPassword } from '@better-auth/utils/password';
 import { PrismaPg } from '@prisma/adapter-pg';
@@ -21,18 +21,26 @@ if (existsSync(envPath)) {
 const Module = require('node:module');
 const originalResolveFilename = Module._resolveFilename;
 
+function isGeneratedPrismaPath(filename?: string): filename is string {
+  if (!filename) {
+    return false;
+  }
+
+  const segments = normalize(filename).split(sep);
+  return segments.includes('generated') && segments.includes('prisma');
+}
+
 Module._resolveFilename = function resolveGeneratedPrismaTypescript(
   request: string,
   parent: { filename?: string } | undefined,
   isMain: boolean,
   options: unknown,
 ) {
-  if (
-    request.endsWith('.js') &&
-    parent?.filename?.includes('/generated/prisma/')
-  ) {
+  const parentFilename = parent?.filename;
+
+  if (request.endsWith('.js') && isGeneratedPrismaPath(parentFilename)) {
     const typescriptRequest = resolve(
-      dirname(parent.filename),
+      dirname(parentFilename),
       request.replace(/\.js$/, '.ts'),
     );
 
