@@ -1,9 +1,18 @@
-import { AuthShell } from '@/components/auth/auth-shell';
+import { redirect } from 'next/navigation';
 
-export default function AuthLayout({
+import { AuthShell } from '@/features/auth/components/auth-shell';
+import { getServerSession } from '@/features/auth/lib/server-auth';
+
+export default async function AuthLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const session = await getServerSession();
+
+  if (session) {
+    redirect('/dashboard');
+  }
+
   return <AuthShell>{children}</AuthShell>;
 }

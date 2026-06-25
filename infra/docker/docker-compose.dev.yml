@@ -36,13 +36,13 @@ services:
       timeout: 5s
       retries: 5
 
-  mailhog:
-    image: ${MAILHOG_IMAGE:-mailhog/mailhog}
-    container_name: ${MAILHOG_CONTAINER_DEV:-sentinel-mailhog-dev}
+  mailpit:
+    image: ${MAILPIT_IMAGE:-axllent/mailpit:latest}
+    container_name: ${MAILPIT_CONTAINER_DEV:-sentinel-mailpit-dev}
     restart: unless-stopped
     ports:
-      - "${MAILHOG_SMTP_HOST_PORT:-1026}:1025"
-      - "${MAILHOG_WEB_HOST_PORT:-8026}:8025"
+      - "${MAILPIT_SMTP_HOST_PORT:-${MAILHOG_SMTP_HOST_PORT:-1026}}:1025"
+      - "${MAILPIT_WEB_HOST_PORT:-${MAILHOG_WEB_HOST_PORT:-8026}}:8025"
 
 volumes:
   postgres_data_dev:

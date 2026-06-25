@@ -1,6 +1,6 @@
 import { Laptop, Smartphone } from "lucide-react";
 
-export default function MobileNotSupportedPage() {
+export function MobileNotSupportedPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-6">
       <div className="max-w-md text-center">
@@ -13,13 +13,13 @@ export default function MobileNotSupportedPage() {
         </h1>
 
         <p className="mt-4 text-muted-foreground">
-          Sentinel is currently optimized for desktop and laptop computers.
-          Please open this application from a desktop browser to continue.
+          Sentinel is optimized for desktop and laptop screens. Please open it
+          from a desktop browser to continue.
         </p>
 
         <div className="mt-8 inline-flex items-center gap-2 rounded-lg border bg-card px-4 py-3 text-sm">
           <Laptop className="h-5 w-5" />
-          Recommended: Chrome, Edge, Firefox, or Safari on desktop.
+          Recommended: desktop Chrome, Edge, Firefox, or Safari.
         </div>
       </div>
     </main>
