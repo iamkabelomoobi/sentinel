@@ -1,5 +1,5 @@
 import { permanentRedirect } from "next/navigation";
 
 export default function Home() {
-  permanentRedirect("/sign-in");
+  permanentRedirect("/dashboard");
 }

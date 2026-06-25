@@ -1,6 +1,6 @@
-import Link from 'next/link';
+import Link from "next/link";
 
-import { AuthCard } from '@/components/auth/auth-card';
+import { AuthCard } from "@/features/auth/components/auth-card";
 
 export default function AuthErrorPage() {
   return (

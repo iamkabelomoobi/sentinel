@@ -8,6 +8,8 @@
   "scripts": {
     "db:generate": "prisma generate",
     "db:migrate:deploy": "prisma migrate deploy",
+    "db:seed": "prisma db seed",
+    "db:seed:prod-admin": "ts-node prisma/seed-prod-admin.ts",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
@@ -24,6 +26,7 @@
   "dependencies": {
     "@better-auth/infra": "^0.3.2",
     "@better-auth/prisma-adapter": "^1.6.20",
+    "@better-auth/utils": "^0.4.2",
     "@nestjs/common": "^11.1.27",
     "@nestjs/core": "^11.1.27",
     "@nestjs/platform-express": "^11.1.27",
@@ -31,10 +34,16 @@
     "@prisma/client": "^7.8.0",
     "@thallesp/nestjs-better-auth": "^2.6.1",
     "better-auth": "^1.6.20",
+    "bull": "^4.16.5",
     "dotenv": "^17.4.2",
+    "ioredis": "^5.11.1",
+    "ip": "^2.0.1",
+    "mailgen": "^2.0.34",
+    "nodemailer": "^9.0.1",
     "pg": "^8.22.0",
     "pm2": "^7.0.1",
     "reflect-metadata": "^0.2.2",
+    "resend": "^6.14.0",
     "rxjs": "^7.8.2"
   },
   "devDependencies": {

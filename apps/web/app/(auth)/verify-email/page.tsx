@@ -1,6 +1,5 @@
-import Link from 'next/link';
-
-import { AuthCard } from '@/components/auth/auth-card';
+import { AuthCard } from '@/features/auth/components/auth-card';
+import { VerifyEmailPanel } from '@/features/auth/components/verify-email-panel';
 
 export default function VerifyEmailPage() {
   return (
@@ -9,30 +8,7 @@ export default function VerifyEmailPage() {
       description="We’ve sent a verification link to your email address."
       tone="success"
     >
-      <div className="flex flex-col gap-5 text-center">
-        <p className="text-sm leading-6 text-slate-400">
-          Please check your inbox and click the link to verify your account.
-        </p>
-
-        <button className="auth-button">Open Email App</button>
-
-        <p className="text-sm text-slate-400">
-          Didn&apos;t receive the email?
-        </p>
-
-        <div className="flex flex-col gap-2">
-          <button className="auth-link text-sm">Resend email</button>
-          <Link href="/sign-up" className="auth-link text-sm">
-            Change email address
-          </Link>
-        </div>
-
-        <div>
-          <Link href="/sign-in" className="text-sm text-slate-400 transition hover:text-slate-200">
-            Back to sign in
-          </Link>
-        </div>
-      </div>
+      <VerifyEmailPanel />
     </AuthCard>
   );
 }
