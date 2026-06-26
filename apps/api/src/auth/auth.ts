@@ -260,5 +260,24 @@ export const auth = betterAuth({
     window: 60,
     max: 100,
   },
-  plugins: [dash(), nextCookies(), sentinel()],
+  plugins: [
+    dash({
+      apiKey: process.env.BETTER_AUTH_API_KEY,
+    }),
+    nextCookies(),
+    sentinel({
+      apiKey: process.env.BETTER_AUTH_API_KEY,
+      security: {
+        suspiciousIpBlocking: true,
+        compromisedPassword: {
+          enabled: true,
+          action: 'block',
+          minBreachCount: 1,
+        },
+        geoBlocking: {
+          allowList: ['ZA'],
+        },
+      },
+    }),
+  ],
 });

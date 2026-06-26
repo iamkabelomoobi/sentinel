@@ -28,6 +28,7 @@
     "@better-auth/infra": "^0.3.2",
     "@better-auth/prisma-adapter": "^1.6.20",
     "@better-auth/utils": "^0.4.2",
+    "@logtail/node": "^0.5.8",
     "@nestjs/common": "^11.1.27",
     "@nestjs/core": "^11.1.27",
     "@nestjs/platform-express": "^11.1.27",

@@ -1,5 +1,6 @@
 import { Job } from 'bull';
 
+import { applicationLogger } from '../../common/logger/application-logger';
 import { notificationUtil } from '../../notification/notification.util';
 import { authenticationQueue } from '../authentication.queue';
 import { EmailJob } from '../email.job';
@@ -7,7 +8,7 @@ import { EmailJob } from '../email.job';
 authenticationQueue.process(async (job: Job<EmailJob>) => {
   const { email, subject, html, meta } = job.data;
 
-  console.log('Processing authentication email job', {
+  await applicationLogger.info('Processing authentication email job', {
     jobId: job.id,
     email,
     subject,
@@ -28,7 +29,7 @@ authenticationQueue.process(async (job: Job<EmailJob>) => {
 
   await notificationUtil.sendEmail(email, subject, html);
 
-  console.log('Authentication email sent successfully', {
+  await applicationLogger.info('Authentication email sent successfully', {
     jobId: job.id,
     email,
     subject,
@@ -37,7 +38,7 @@ authenticationQueue.process(async (job: Job<EmailJob>) => {
 });
 
 authenticationQueue.on('completed', (job) => {
-  console.log('Authentication email job completed', {
+  void applicationLogger.info('Authentication email job completed', {
     jobId: job.id,
     email: job.data.email,
     subject: job.data.subject,
@@ -46,11 +47,10 @@ authenticationQueue.on('completed', (job) => {
 });
 
 authenticationQueue.on('failed', (job, error) => {
-  console.error('Authentication email job failed', {
+  void applicationLogger.error('Authentication email job failed', error, {
     jobId: job?.id,
     email: job?.data.email,
     subject: job?.data.subject,
     meta: job?.data.meta,
-    error: error.message,
   });
 });

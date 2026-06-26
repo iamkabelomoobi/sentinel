@@ -1,5 +1,6 @@
 import { Resend } from 'resend';
 
+import { applicationLogger } from '../common/logger/application-logger';
 import { notificationConfig } from './notification.config';
 import { notificationLib } from './notification.lib';
 
@@ -61,11 +62,18 @@ class NotificationUtil {
     });
 
     if (error) {
+      await applicationLogger.error('Email send failed', error, {
+        provider: 'resend',
+        receiver,
+        subject,
+      });
       throw new Error(error.message);
     }
 
-    console.log(`Email sent to ${receiver} with subject "${subject}"`, {
+    await applicationLogger.info('Email sent', {
       provider: 'resend',
+      receiver,
+      subject,
       id: data?.id,
     });
   }
@@ -75,20 +83,37 @@ class NotificationUtil {
     subject: string,
     html: string,
   ) {
-    await notificationLib.createNodemailerTransport().sendMail({
-      from: this.getFromAddress(),
-      to: receiver,
-      subject,
-      html,
-    });
+    try {
+      await notificationLib.createNodemailerTransport().sendMail({
+        from: this.getFromAddress(),
+        to: receiver,
+        subject,
+        html,
+      });
 
-    console.log(`Email sent to ${receiver} with subject "${subject}"`, {
-      provider: 'local',
-      inbox: process.env.MAILPIT_WEB_URL,
-    });
+      await applicationLogger.info('Email sent', {
+        provider: 'local',
+        receiver,
+        subject,
+        inbox: process.env.MAILPIT_WEB_URL,
+      });
+    } catch (error) {
+      await applicationLogger.error('Email send failed', error, {
+        provider: 'local',
+        receiver,
+        subject,
+      });
+      throw error;
+    }
   }
 
   public async sendEmail(receiver: string, subject: string, html: string) {
+    await applicationLogger.info('Email send requested', {
+      provider: process.env.NODE_ENV === 'production' ? 'resend' : 'local',
+      receiver,
+      subject,
+    });
+
     if (process.env.NODE_ENV === 'production') {
       await this.sendWithResend(receiver, subject, html);
       return;
