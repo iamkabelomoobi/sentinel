@@ -5,6 +5,8 @@ set -euo pipefail
 APP_NAME="sentinel"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
+export DOCKER_BUILDKIT="${DOCKER_BUILDKIT:-1}"
+
 DOMAIN_API="api.sentinel.bbbsoftware.co.za"
 DOMAIN_WEB="app.sentinel.bbbsoftware.co.za"
 LETSENCRYPT_EMAIL="giftmoobi@gmail.com"

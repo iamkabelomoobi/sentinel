@@ -1,3 +1,20 @@
+# syntax=docker/dockerfile:1.7
+
+FROM node:22-alpine AS deps
+
+WORKDIR /app
+RUN corepack enable
+
+COPY package.json yarn.lock .yarnrc.yml ./
+COPY .yarn .yarn
+COPY apps/web/package.json apps/web/package.json
+COPY apps/api/package.json apps/api/package.json
+COPY packages/eslint-config/package.json packages/eslint-config/package.json
+COPY packages/typescript-config/package.json packages/typescript-config/package.json
+COPY packages/ui/package.json packages/ui/package.json
+
+RUN --mount=type=cache,target=/root/.yarn yarn install --immutable
+
 FROM node:22-alpine AS builder
 
 WORKDIR /app
@@ -6,9 +23,13 @@ RUN corepack enable
 ARG NEXT_PUBLIC_API_URL=https://api.sentinel.bbbsoftware.co.za
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/.yarn ./.yarn
+COPY --from=deps /app/.yarnrc.yml ./.yarnrc.yml
+COPY --from=deps /app/package.json ./package.json
+COPY --from=deps /app/yarn.lock ./yarn.lock
 COPY . .
 
-RUN yarn install --immutable
 RUN yarn workspace web build
 
 FROM node:22-alpine AS runner
