@@ -3,6 +3,9 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 RUN corepack enable
 
+ARG NEXT_PUBLIC_API_URL=https://api.sentinel.bbbsoftware.co.za
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
 COPY . .
 
 RUN yarn install --immutable

@@ -16,6 +16,8 @@ services:
     build:
       context: ../..
       dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: https://api.sentinel.bbbsoftware.co.za
     container_name: sentinel-web-prod
     restart: unless-stopped
     env_file:
