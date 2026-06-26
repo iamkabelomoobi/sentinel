@@ -8,6 +8,7 @@ RUN corepack enable
 COPY package.json yarn.lock .yarnrc.yml ./
 COPY .yarn .yarn
 COPY apps/api/package.json apps/api/package.json
+COPY apps/docs/package.json apps/docs/package.json
 COPY apps/web/package.json apps/web/package.json
 COPY packages/eslint-config/package.json packages/eslint-config/package.json
 COPY packages/typescript-config/package.json packages/typescript-config/package.json
@@ -41,6 +42,11 @@ ENV NODE_ENV=production
 COPY package.json yarn.lock .yarnrc.yml ./
 COPY .yarn .yarn
 COPY apps/api/package.json apps/api/package.json
+COPY apps/docs/package.json apps/docs/package.json
+COPY apps/web/package.json apps/web/package.json
+COPY packages/eslint-config/package.json packages/eslint-config/package.json
+COPY packages/typescript-config/package.json packages/typescript-config/package.json
+COPY packages/ui/package.json packages/ui/package.json
 
 COPY --from=builder /app/apps/api/dist apps/api/dist
 COPY --from=builder /app/apps/api/generated apps/api/generated
