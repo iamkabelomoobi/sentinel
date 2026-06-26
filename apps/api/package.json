@@ -10,6 +10,7 @@
     "db:migrate:deploy": "prisma migrate deploy",
     "db:seed": "prisma db seed",
     "db:seed:prod-admin": "ts-node prisma/seed-prod-admin.ts",
+    "db:seed:prod-admin-org": "ts-node prisma/seed-prod-admin-org.ts",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",

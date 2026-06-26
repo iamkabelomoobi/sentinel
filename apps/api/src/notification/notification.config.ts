@@ -49,7 +49,10 @@ export const notificationConfig = {
         numberEnv('MAILDEV_PORT', numberEnv('SMTP_PORT', 1025)),
       ),
     ),
-    secure: booleanEnv('NODEMAILER_SECURE', process.env.NODE_ENV === 'production'),
+    secure: booleanEnv(
+      'NODEMAILER_SECURE',
+      process.env.NODE_ENV === 'production',
+    ),
     auth: {
       user: process.env.NODEMAILER_USERNAME || process.env.SMTP_USER || '',
       pass: process.env.NODEMAILER_PASSWORD || process.env.SMTP_PASSWORD || '',
