@@ -25,6 +25,9 @@ ARG NEXT_PUBLIC_API_URL=https://api.sentinel.bbbsoftware.co.za
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
 COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/apps/api/node_modules ./apps/api/node_modules
+COPY --from=deps /app/apps/docs/node_modules ./apps/docs/node_modules
+COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
 COPY --from=deps /app/.yarn ./.yarn
 COPY --from=deps /app/.yarnrc.yml ./.yarnrc.yml
 COPY --from=deps /app/package.json ./package.json
