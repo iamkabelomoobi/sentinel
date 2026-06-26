@@ -6,7 +6,7 @@ services:
     container_name: sentinel-api-prod
     restart: unless-stopped
     env_file:
-      - ../../apps/api/.env
+      - ../../apps/api/.env.production
     ports:
       - "4000:4000"
     extra_hosts:
