@@ -54,6 +54,7 @@ COPY packages/ui/package.json packages/ui/package.json
 COPY --from=builder /app/apps/api/dist apps/api/dist
 COPY --from=builder /app/apps/api/generated apps/api/generated
 COPY --from=builder /app/apps/api/prisma apps/api/prisma
+COPY --from=builder /app/apps/api/prisma.config.ts apps/api/prisma.config.ts
 COPY infra/pm2/api.ecosystem.config.cjs infra/pm2/api.ecosystem.config.cjs
 
 RUN yarn workspaces focus api

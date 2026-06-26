@@ -21,6 +21,7 @@ API_NGINX_TARGET="$NGINX_AVAILABLE/sentinel-api"
 WEB_NGINX_TARGET="$NGINX_AVAILABLE/sentinel-web"
 
 COMPOSE_FILE="$ROOT_DIR/infra/docker/docker-compose.prod.yml"
+API_ENV_FILE="$ROOT_DIR/apps/api/.env.production"
 LAST_DEPLOYED_FILE="$ROOT_DIR/.last-deployed"
 
 echo "🚀 Deploying $APP_NAME..."
@@ -101,14 +102,19 @@ else
 fi
 
 if [ "$deploy_api" = true ]; then
+  if [ ! -f "$API_ENV_FILE" ]; then
+    echo "❌ Missing API env file: $API_ENV_FILE"
+    exit 1
+  fi
+
   echo "🐳 Rebuilding API image..."
   docker compose -f "$COMPOSE_FILE" build api
 
   echo "🗄️ Running production database migrations..."
-  docker compose -f "$COMPOSE_FILE" run --rm --no-deps api yarn workspace api db:migrate:deploy
+  docker compose -f "$COMPOSE_FILE" run --rm --no-deps --env-from-file "$API_ENV_FILE" api yarn workspace api db:migrate:deploy
 
   echo "🌱 Seeding missing production admin and organization..."
-  docker compose -f "$COMPOSE_FILE" run --rm --no-deps api yarn workspace api db:seed:prod-admin-org
+  docker compose -f "$COMPOSE_FILE" run --rm --no-deps --env-from-file "$API_ENV_FILE" api yarn workspace api db:seed:prod-admin-org
 
   echo "🚀 Starting API..."
   docker compose -f "$COMPOSE_FILE" up -d --no-deps api
