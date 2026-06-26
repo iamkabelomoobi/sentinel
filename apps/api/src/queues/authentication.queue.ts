@@ -1,5 +1,6 @@
 import Queue from 'bull';
 
+import { applicationLogger } from '../common/logger/application-logger';
 import { EmailJob } from './email.job';
 
 function getRedisOptions() {
@@ -30,24 +31,20 @@ const authenticationQueue = new Queue<EmailJob>('authenticationQueue', {
 });
 
 function handleQueueError(error: Error) {
-  console.error('Authentication queue error:', {
-    error: error.message,
-    stack: error.stack,
-  });
+  void applicationLogger.error('Authentication queue error', error);
 }
 
 authenticationQueue.on('error', handleQueueError);
 
 authenticationQueue.on('failed', (job, error) => {
-  console.error(`Job ${job.id} failed`, {
+  void applicationLogger.error('Authentication queue job failed', error, {
     jobId: job.id,
-    error: error.message,
     data: job.data,
   });
 });
 
 authenticationQueue.on('completed', (job) => {
-  console.log(`Job ${job.id} completed`, {
+  void applicationLogger.info('Authentication queue job completed', {
     jobId: job.id,
     email: job.data.email,
     subject: job.data.subject,

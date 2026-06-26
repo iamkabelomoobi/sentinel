@@ -23,6 +23,7 @@
     "packages/*"
   ],
   "dependencies": {
+    "@logtail/node": "^0.5.8",
     "@prisma/client": "^7.8.0",
     "pm2": "^7.0.1"
   }
