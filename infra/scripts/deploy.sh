@@ -99,8 +99,17 @@ else
 fi
 
 if [ "$deploy_api" = true ]; then
-  echo "🐳 Rebuilding and restarting API..."
-  docker compose -f "$COMPOSE_FILE" up -d --build api
+  echo "🐳 Rebuilding API image..."
+  docker compose -f "$COMPOSE_FILE" build api
+
+  echo "🗄️ Running production database migrations..."
+  docker compose -f "$COMPOSE_FILE" run --rm --no-deps api yarn workspace api db:migrate:deploy
+
+  echo "🌱 Seeding missing production admin and organization..."
+  docker compose -f "$COMPOSE_FILE" run --rm --no-deps api yarn workspace api db:seed:prod-admin-org
+
+  echo "🚀 Starting API..."
+  docker compose -f "$COMPOSE_FILE" up -d --no-deps api
 else
   echo "✅ No API changes detected"
 fi

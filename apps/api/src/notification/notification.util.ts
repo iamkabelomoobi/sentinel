@@ -22,7 +22,9 @@ class NotificationUtil {
   private getFromAddress() {
     if (process.env.NODE_ENV === 'production') {
       if (!notificationConfig.resend.fromEmail) {
-        throw new Error('Missing required environment variable: RESEND_FROM_EMAIL');
+        throw new Error(
+          'Missing required environment variable: RESEND_FROM_EMAIL',
+        );
       }
 
       return notificationConfig.resend.fromEmail;
@@ -46,7 +48,11 @@ class NotificationUtil {
     return this.resendClient;
   }
 
-  private async sendWithResend(receiver: string, subject: string, html: string) {
+  private async sendWithResend(
+    receiver: string,
+    subject: string,
+    html: string,
+  ) {
     const { data, error } = await this.getResendClient().emails.send({
       from: this.getFromAddress(),
       to: [receiver],
@@ -64,7 +70,11 @@ class NotificationUtil {
     });
   }
 
-  private async sendWithLocalMail(receiver: string, subject: string, html: string) {
+  private async sendWithLocalMail(
+    receiver: string,
+    subject: string,
+    html: string,
+  ) {
     await notificationLib.createNodemailerTransport().sendMail({
       from: this.getFromAddress(),
       to: receiver,

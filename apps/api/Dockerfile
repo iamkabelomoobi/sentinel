@@ -19,7 +19,7 @@ COPY . .
 COPY --from=builder /app/apps/api/dist apps/api/dist
 COPY infra/pm2/api.ecosystem.config.cjs infra/pm2/api.ecosystem.config.cjs
 
-RUN yarn workspaces focus api --production
+RUN yarn workspaces focus api
 
 EXPOSE 4000
 
