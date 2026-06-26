@@ -17,6 +17,7 @@ RUN yarn global add pm2
 
 COPY . .
 COPY --from=builder /app/apps/api/dist apps/api/dist
+COPY --from=builder /app/apps/api/generated apps/api/generated
 COPY infra/pm2/api.ecosystem.config.cjs infra/pm2/api.ecosystem.config.cjs
 
 RUN yarn workspaces focus api
