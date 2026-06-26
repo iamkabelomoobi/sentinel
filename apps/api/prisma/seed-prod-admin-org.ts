@@ -1,8 +1,7 @@
-import { randomUUID } from 'node:crypto';
+import { randomBytes, randomUUID, scrypt } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { dirname, normalize, resolve, sep } from 'node:path';
 
-import { hashPassword } from '@better-auth/utils/password';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { config } from 'dotenv';
 import { Pool } from 'pg';
@@ -103,6 +102,37 @@ function requireAdminPassword() {
     password: process.env[match]!,
     source: match,
   };
+}
+
+function generatePasswordKey(password: string, salt: string) {
+  return new Promise<Buffer>((resolve, reject) => {
+    scrypt(
+      password.normalize('NFKC'),
+      salt,
+      64,
+      {
+        N: 16384,
+        r: 16,
+        p: 1,
+        maxmem: 128 * 16384 * 16 * 2,
+      },
+      (error, key) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        resolve(key);
+      },
+    );
+  });
+}
+
+async function hashPassword(password: string) {
+  const salt = randomBytes(16).toString('hex');
+  const key = await generatePasswordKey(password, salt);
+
+  return `${salt}:${key.toString('hex')}`;
 }
 
 const organization = {
