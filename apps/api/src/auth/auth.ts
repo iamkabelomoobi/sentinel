@@ -18,6 +18,11 @@ import { authenticationTemplate } from './authentication.template';
 const prisma = new PrismaClient({ adapter });
 const authBaseUrl = process.env.BETTER_AUTH_URL || 'http://localhost:4000';
 const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+const authCookieDomain =
+  process.env.AUTH_COOKIE_DOMAIN ||
+  (process.env.NODE_ENV === 'production'
+    ? '.sentinel.bbbsoftware.co.za'
+    : undefined);
 const trustedOrigins = Array.from(
   new Set(
     [authBaseUrl, frontendUrl, ...(process.env.CORS_ORIGINS || '').split(',')]
@@ -238,6 +243,14 @@ export const auth = betterAuth({
     updateAge: 60 * 60 * 24,
   },
   advanced: {
+    ...(authCookieDomain
+      ? {
+          crossSubDomainCookies: {
+            enabled: true,
+            domain: authCookieDomain,
+          },
+        }
+      : {}),
     ipAddress: {
       ipAddressHeaders: ['x-forwarded-for', 'x-real-ip'],
     },
