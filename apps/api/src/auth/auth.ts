@@ -1,6 +1,6 @@
 import 'dotenv/config';
 
-import { dash } from '@better-auth/infra';
+import { dash, sentinel } from '@better-auth/infra';
 import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { nextCookies } from 'better-auth/next-js';
@@ -260,5 +260,5 @@ export const auth = betterAuth({
     window: 60,
     max: 100,
   },
-  plugins: [dash(), nextCookies()],
+  plugins: [dash(), nextCookies(), sentinel()],
 });
