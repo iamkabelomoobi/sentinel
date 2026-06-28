@@ -43,7 +43,7 @@ FROM node:22-alpine AS runner
 
 WORKDIR /app
 RUN corepack enable
-RUN yarn global add pm2
+RUN npm install -g pm2
 
 ENV NODE_ENV=production
 ENV PORT=3000

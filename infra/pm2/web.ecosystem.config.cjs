@@ -4,7 +4,7 @@ module.exports = {
       name: "sentinel-web",
 
       script: "./apps/web/server.js",
-      cwd: "/root/sentinel",
+      cwd: "/app",
 
       instances: 1,
       exec_mode: "fork",
