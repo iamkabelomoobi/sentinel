@@ -3,6 +3,7 @@ import './queues/workers/authentication.worker';
 
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { json } from 'express';
 
 import { AppModule } from './app.module';
 
@@ -10,6 +11,9 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     bodyParser: false,
   });
+
+  app.use('/api/profile', json({ limit: '2mb' }));
+  app.use('/api/registration', json());
 
   const allowedOrigins = Array.from(
     new Set(

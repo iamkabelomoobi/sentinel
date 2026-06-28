@@ -9,5 +9,6 @@ import { auth } from './auth';
       auth,
     }),
   ],
+  exports: [BetterAuthModule],
 })
 export class AuthModule {}

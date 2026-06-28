@@ -6,7 +6,8 @@
     "dev": "turbo run dev",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "check-types": "turbo run check-types"
+    "check-types": "turbo run check-types",
+    "docker:dev": "docker compose --env-file apps/api/.env -f infra/docker/docker-compose.dev.yml up -d"
   },
   "devDependencies": {
     "prettier": "^3.8.4",

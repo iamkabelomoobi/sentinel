@@ -1,11 +1,12 @@
-'use client';
+"use client";
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { SignUpInput } from "@sentinel/schemas/auth";
 
-import { authApi } from './auth-api';
+import { authApi } from "./auth-api";
 
 export const authQueryKeys = {
-  session: ['auth', 'session'] as const,
+  session: ["auth", "session"] as const,
 };
 
 export function getAuthErrorMessage(error: unknown, fallback: string) {
@@ -16,13 +17,8 @@ export function useSignInMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      email,
-      password,
-    }: {
-      email: string;
-      password: string;
-    }) => authApi.signIn(email, password),
+    mutationFn: ({ email, password }: { email: string; password: string }) =>
+      authApi.signIn(email, password),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: authQueryKeys.session });
     },
@@ -31,15 +27,7 @@ export function useSignInMutation() {
 
 export function useSignUpMutation() {
   return useMutation({
-    mutationFn: ({
-      name,
-      email,
-      password,
-    }: {
-      name: string;
-      email: string;
-      password: string;
-    }) => authApi.signUp(name, email, password),
+    mutationFn: (input: SignUpInput) => authApi.signUp(input),
   });
 }
 

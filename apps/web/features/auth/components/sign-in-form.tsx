@@ -1,33 +1,42 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Eye } from 'lucide-react';
-import { FormEvent, useState } from 'react';
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Eye } from "lucide-react";
+import { FormEvent, useState } from "react";
+import { signInSchema } from "@sentinel/schemas/auth";
 
-import { AuthAlert } from './auth-alert';
+import { AuthAlert } from "./auth-alert";
 import {
   getAuthErrorMessage,
   useSignInMutation,
-} from '@/features/auth/lib/auth-queries';
+} from "@/features/auth/lib/auth-queries";
 
 export function SignInForm() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const signInMutation = useSignInMutation();
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setError('');
+    setError("");
+    const parsed = signInSchema.safeParse({ email, password });
+
+    if (!parsed.success) {
+      setError(
+        parsed.error.issues[0]?.message ?? "Check your sign in details.",
+      );
+      return;
+    }
 
     try {
-      await signInMutation.mutateAsync({ email, password });
-      router.push('/dashboard');
+      await signInMutation.mutateAsync(parsed.data);
+      router.push("/dashboard");
       router.refresh();
     } catch (caught) {
-      setError(getAuthErrorMessage(caught, 'Unable to sign in.'));
+      setError(getAuthErrorMessage(caught, "Unable to sign in."));
     }
   }
 
@@ -92,8 +101,15 @@ export function SignInForm() {
         type="submit"
         disabled={signInMutation.isPending}
       >
-        {signInMutation.isPending ? 'Signing In...' : 'Sign In'}
+        {signInMutation.isPending ? "Signing In..." : "Sign In"}
       </button>
+
+      <p className="text-center text-sm text-slate-400">
+        Need an organization account?{" "}
+        <Link href="/sign-up" className="auth-link">
+          Register
+        </Link>
+      </p>
     </form>
   );
 }

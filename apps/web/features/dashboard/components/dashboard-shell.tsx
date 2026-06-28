@@ -8,18 +8,31 @@ import {
   CircleDot,
   Clock3,
   Crosshair,
+  KeyRound,
   Headphones,
   MapPin,
+  MonitorSmartphone,
   Navigation,
   Phone,
   Plus,
+  Save,
   Search,
   Shield,
+  ShieldCheck,
   Target,
+  UserCog,
   UserRound,
   type LucideIcon,
 } from "lucide-react";
-import { useMemo } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useMemo, useRef, useState } from "react";
+import {
+  emailChangeSchema,
+  profileImageDataUrlSchema,
+  profileUpdateSchema,
+} from "@sentinel/schemas/profile";
+import { toast } from "sonner";
 
 import { SignOutButton } from "@/features/auth/components/sign-out-button";
 import {
@@ -36,6 +49,11 @@ import {
   routePoints,
   routeSteps,
 } from "../lib/dashboard-data";
+import {
+  type DashboardProfileResponse,
+  requestEmailChange,
+  updateDashboardProfile,
+} from "../lib/profile-api";
 
 const toneStyles = {
   good: "text-emerald-300",
@@ -50,11 +68,23 @@ const incidentTone = {
   green: "bg-emerald-500/15 text-emerald-300 ring-emerald-400/30",
 };
 
+function getErrorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
+}
+
+function getValidationMessage(
+  result: { success: false; error: { issues: { message: string }[] } },
+  fallback: string,
+) {
+  return result.error.issues[0]?.message ?? fallback;
+}
+
 type DashboardUser = {
   name: string;
   email: string;
   role: string;
   status?: string;
+  image?: string | null;
 };
 
 export function DashboardShell({
@@ -72,44 +102,105 @@ export function DashboardShell({
   );
 
   return (
+    <DashboardFrame
+      navItems={visibleNav}
+      role={role}
+      roleLabel={roleConfig.label}
+      user={{
+        userName: user.name || roleConfig.userName,
+        userMeta: user.role,
+        email: user.email,
+        image: user.image,
+      }}
+    >
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.22em] text-cyan-300">
+            {roleConfig.title}
+          </p>
+          <h1 className="mt-1 text-xl font-semibold text-white">Overview</h1>
+        </div>
+        {role === "RESPONDER" ? (
+          <div className="rounded-md border border-emerald-400/20 bg-emerald-400/10 px-3 py-2 text-xs font-semibold text-emerald-300">
+            En Route
+          </div>
+        ) : null}
+      </div>
+
+      {role === "RESPONDER" ? (
+        <ResponderDashboard />
+      ) : (
+        <OperationsDashboard role={role} />
+      )}
+    </DashboardFrame>
+  );
+}
+
+export function ProfileManagementShell({
+  initialRole,
+  profile,
+  user,
+}: {
+  initialRole: DashboardRole;
+  profile: DashboardProfileResponse | null;
+  user: DashboardUser;
+}) {
+  const role = initialRole;
+  const roleConfig = roles.find((item) => item.id === role) ?? roles[0]!;
+  const visibleNav = useMemo(
+    () => navItems.filter((item) => item.roles.includes(role)),
+    [role],
+  );
+
+  return (
+    <DashboardFrame
+      navItems={visibleNav}
+      role={role}
+      roleLabel={roleConfig.label}
+      user={{
+        userName: user.name || roleConfig.userName,
+        userMeta: user.role,
+        email: user.email,
+        image: profile?.user.image ?? user.image,
+      }}
+    >
+      <ProfileManagementView
+        profile={profile}
+        roleLabel={roleConfig.label}
+        user={user}
+      />
+    </DashboardFrame>
+  );
+}
+
+function DashboardFrame({
+  children,
+  navItems: visibleNav,
+  role,
+  roleLabel,
+  user,
+}: {
+  children: React.ReactNode;
+  navItems: NavItem[];
+  role: DashboardRole;
+  roleLabel: string;
+  user: {
+    userName: string;
+    userMeta: string;
+    email: string;
+    image?: string | null;
+  };
+}) {
+  return (
     <main className="min-h-screen overflow-hidden bg-[#02050b] text-slate-100">
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_28%_0%,rgba(14,165,233,0.16),transparent_32%),radial-gradient(circle_at_82%_18%,rgba(37,99,235,0.12),transparent_28%),linear-gradient(180deg,#02050b_0%,#030712_100%)]" />
 
       <div className="relative flex min-h-screen w-full gap-3 p-0">
-        <Sidebar
-          navItems={visibleNav}
-          role={role}
-          user={{
-            userName: user.name || roleConfig.userName,
-            userMeta: user.role,
-            email: user.email,
-          }}
-        />
+        <Sidebar navItems={visibleNav} role={role} user={user} />
 
         <section className="min-w-0 flex-1 p-3">
-          <TopBar roleLabel={roleConfig.label} />
-
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.22em] text-cyan-300">
-                {roleConfig.title}
-              </p>
-              <h1 className="mt-1 text-xl font-semibold text-white">
-                Overview
-              </h1>
-            </div>
-            {role === "RESPONDER" ? (
-              <div className="rounded-md border border-emerald-400/20 bg-emerald-400/10 px-3 py-2 text-xs font-semibold text-emerald-300">
-                En Route
-              </div>
-            ) : null}
-          </div>
-
-          {role === "RESPONDER" ? (
-            <ResponderDashboard />
-          ) : (
-            <OperationsDashboard role={role} />
-          )}
+          <TopBar roleLabel={roleLabel} />
+          {children}
         </section>
       </div>
     </main>
@@ -127,8 +218,11 @@ function Sidebar({
     userName: string;
     userMeta: string;
     email: string;
+    image?: string | null;
   };
 }) {
+  const pathname = usePathname();
+
   return (
     <aside className="hidden min-h-screen w-[260px] shrink-0 border-r border-cyan-300/10 bg-[#031122]/88 p-4 shadow-[20px_0_70px_rgba(0,0,0,0.32)] backdrop-blur-xl lg:flex lg:flex-col">
       <div className="mb-7 flex items-center gap-3">
@@ -141,34 +235,50 @@ function Sidebar({
       </div>
 
       <nav className="flex flex-1 flex-col gap-1.5">
-        {items.map(({ label, icon: Icon }, index) => {
-          const active = index === 0;
+        {items.map(({ label, icon: Icon, href }) => {
+          const active = href !== "#" && pathname === href;
+          const className = `flex h-10 items-center gap-3 rounded-md px-3 text-left text-xs font-medium transition ${
+            active
+              ? "bg-blue-600/45 text-cyan-200 shadow-[0_12px_28px_rgba(37,99,235,0.22)]"
+              : "text-slate-400 hover:bg-white/5 hover:text-slate-100"
+          }`;
 
-          return (
-            <button
-              key={label}
-              className={`flex h-10 items-center gap-3 rounded-md px-3 text-left text-xs font-medium transition ${
-                active
-                  ? "bg-blue-600/45 text-cyan-200 shadow-[0_12px_28px_rgba(37,99,235,0.22)]"
-                  : "text-slate-400 hover:bg-white/5 hover:text-slate-100"
-              }`}
-              type="button"
-            >
+          return href === "#" ? (
+            <button key={label} className={className} type="button">
               <Icon className="size-4" strokeWidth={1.8} />
               {label}
             </button>
+          ) : (
+            <Link
+              key={label}
+              aria-current={active ? "page" : undefined}
+              className={className}
+              href={href}
+            >
+              <Icon className="size-4" strokeWidth={1.8} />
+              {label}
+            </Link>
           );
         })}
       </nav>
 
       <div className="mt-8 rounded-lg border border-white/8 bg-white/[0.035] p-3">
         <div className="flex items-center gap-3">
-          <div className="relative flex size-9 items-center justify-center rounded-full bg-slate-700 text-xs font-bold text-white">
-            {user.userName
-              .split(" ")
-              .map((part) => part[0])
-              .join("")
-              .slice(0, 2)}
+          <div className="relative flex size-9 items-center justify-center overflow-hidden rounded-full bg-slate-700 text-xs font-bold text-white">
+            {user.image ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                alt=""
+                className="h-full w-full object-cover"
+                src={user.image}
+              />
+            ) : (
+              user.userName
+                .split(" ")
+                .map((part) => part[0])
+                .join("")
+                .slice(0, 2)
+            )}
             <span className="absolute bottom-0 right-0 size-2.5 rounded-full border border-[#031122] bg-emerald-400" />
           </div>
           <div className="min-w-0 flex-1">
@@ -194,11 +304,445 @@ function Sidebar({
   );
 }
 
-function TopBar({
+function ProfileManagementView({
+  profile,
   roleLabel,
+  user,
 }: {
+  profile: DashboardProfileResponse | null;
   roleLabel: string;
+  user: DashboardUser;
 }) {
+  const [activeTab, setActiveTab] = useState("Profile Information");
+  const profileUser = profile?.user;
+  const [fullName, setFullName] = useState(profileUser?.name ?? user.name);
+  const [phone, setPhone] = useState(profileUser?.phone ?? "");
+  const [organizationId, setOrganizationId] = useState(
+    profileUser?.organizationId ?? "",
+  );
+  const [organizations, setOrganizations] = useState(
+    profile?.organizations ?? [],
+  );
+  const [profileImage, setProfileImage] = useState(
+    profileUser?.image ?? user.image ?? null,
+  );
+  const [saveState, setSaveState] = useState<
+    "idle" | "saving" | "saved" | "error"
+  >("idle");
+  const [emailChangeState, setEmailChangeState] = useState<
+    "idle" | "sending" | "sent" | "error"
+  >("idle");
+  const [newEmail, setNewEmail] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const email = profileUser?.email ?? user.email;
+  const initials = (fullName || user.email)
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+  return (
+    <div className="w-full">
+      <div className="mb-4">
+        <p className="text-xs font-bold uppercase tracking-[0.22em] text-cyan-300">
+          Profile
+        </p>
+        <h1 className="mt-1 text-xl font-semibold text-white">My Profile</h1>
+        <p className="mt-1 text-xs text-slate-500">
+          Manage your personal information and account security.
+        </p>
+      </div>
+
+      <Panel className="overflow-hidden">
+        <div className="border-b border-cyan-300/10 px-5 pt-5">
+          <div className="flex flex-wrap gap-2">
+            {[
+              "Profile Information",
+              "Change Email",
+              "Change Password",
+              "Two-Factor Authentication",
+              "Sessions",
+            ].map((tab) => (
+              <button
+                key={tab}
+                className={`border-b-2 px-1 pb-3 text-[0.68rem] font-semibold transition sm:text-xs ${
+                  activeTab === tab
+                    ? "border-cyan-300 text-cyan-200"
+                    : "border-transparent text-slate-500 hover:text-slate-300"
+                }`}
+                onClick={() => {
+                  setActiveTab(tab);
+                  setSaveState("idle");
+                  setEmailChangeState("idle");
+                }}
+                type="button"
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {activeTab === "Profile Information" ? (
+          <form
+            className="grid gap-6 p-5 lg:grid-cols-[180px_1fr]"
+            onSubmit={(event) => {
+              event.preventDefault();
+              const parsedProfile = profileUpdateSchema.safeParse({
+                name: fullName,
+                phone: phone || null,
+                image: profileImage ?? null,
+                organizationId,
+              });
+
+              if (!parsedProfile.success) {
+                setSaveState("error");
+                toast.error(
+                  getValidationMessage(
+                    parsedProfile,
+                    "Check your profile details.",
+                  ),
+                );
+                return;
+              }
+
+              const toastId = toast.loading("Saving profile...");
+              setSaveState("saving");
+              updateDashboardProfile(parsedProfile.data)
+                .then((nextProfile) => {
+                  setFullName(nextProfile.user.name);
+                  setPhone(nextProfile.user.phone ?? "");
+                  setOrganizationId(nextProfile.user.organizationId);
+                  setOrganizations(nextProfile.organizations);
+                  setProfileImage(nextProfile.user.image);
+                  setSaveState("saved");
+                  toast.success("Profile changes saved.", { id: toastId });
+                })
+                .catch((error: unknown) => {
+                  setSaveState("error");
+                  toast.error(
+                    getErrorMessage(error, "Unable to update profile."),
+                    { id: toastId },
+                  );
+                });
+            }}
+          >
+            <div className="flex flex-col items-center gap-3">
+              <div className="relative flex size-28 items-center justify-center overflow-hidden rounded-full border border-cyan-300/20 bg-slate-800 text-2xl font-bold text-white shadow-[0_0_34px_rgba(14,165,233,0.16)]">
+                {profileImage ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    alt=""
+                    className="h-full w-full object-cover"
+                    src={profileImage}
+                  />
+                ) : (
+                  initials
+                )}
+                <span className="absolute bottom-2 right-2 size-3.5 rounded-full border-2 border-[#06162a] bg-emerald-400" />
+              </div>
+              <input
+                ref={fileInputRef}
+                accept="image/png,image/jpeg,image/webp,image/gif"
+                className="hidden"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+
+                  if (!file) {
+                    return;
+                  }
+
+                  if (!file.type.startsWith("image/")) {
+                    setSaveState("error");
+                    toast.error("Choose an image file.");
+                    event.target.value = "";
+                    return;
+                  }
+
+                  if (file.size > 1_000_000) {
+                    setSaveState("error");
+                    toast.error("Profile image must be under 1MB.");
+                    event.target.value = "";
+                    return;
+                  }
+
+                  const reader = new FileReader();
+
+                  reader.onload = () => {
+                    if (typeof reader.result !== "string") {
+                      setSaveState("error");
+                      toast.error("Unable to read image.");
+                      return;
+                    }
+
+                    const parsedImage = profileImageDataUrlSchema.safeParse(
+                      reader.result,
+                    );
+
+                    if (!parsedImage.success) {
+                      setSaveState("error");
+                      toast.error(
+                        getValidationMessage(
+                          parsedImage,
+                          "Choose a smaller PNG, JPG, WebP, or GIF.",
+                        ),
+                      );
+                      return;
+                    }
+
+                    setProfileImage(parsedImage.data);
+                    setSaveState("idle");
+                    toast.info("Photo selected. Save changes to upload it.");
+                  };
+                  reader.onerror = () => {
+                    setSaveState("error");
+                    toast.error("Unable to read image.");
+                  };
+                  reader.readAsDataURL(file);
+                }}
+                type="file"
+              />
+              <button
+                className="h-8 rounded-md border border-blue-400/30 bg-blue-500/10 px-3 text-[0.68rem] font-semibold text-blue-200 transition hover:bg-blue-500/16"
+                onClick={() => fileInputRef.current?.click()}
+                type="button"
+              >
+                Change Photo
+              </button>
+            </div>
+
+            <div className="grid gap-4">
+              <ProfileField label="Full Name">
+                <input
+                  className="profile-input"
+                  onChange={(event) => setFullName(event.target.value)}
+                  value={fullName}
+                />
+              </ProfileField>
+
+              <ProfileField label="Phone">
+                <input
+                  className="profile-input"
+                  onChange={(event) => setPhone(event.target.value)}
+                  value={phone}
+                />
+              </ProfileField>
+
+              <ProfileField label="Role">
+                <select
+                  className="profile-input"
+                  value={roleLabel}
+                  onChange={() => undefined}
+                >
+                  <option>{roleLabel}</option>
+                </select>
+              </ProfileField>
+
+              <ProfileField label="Organization">
+                <select
+                  className="profile-input"
+                  onChange={(event) => setOrganizationId(event.target.value)}
+                  value={organizationId}
+                >
+                  {organizations.map((organization) => (
+                    <option key={organization.id} value={organization.id}>
+                      {organization.name}
+                    </option>
+                  ))}
+                </select>
+              </ProfileField>
+
+              <div className="flex flex-wrap items-center gap-3 pt-1">
+                <button
+                  className="flex h-10 flex-1 items-center justify-center gap-2 rounded-md bg-gradient-to-r from-blue-500 to-indigo-600 px-4 text-xs font-semibold text-white shadow-[0_14px_32px_rgba(37,99,235,0.34)] transition hover:brightness-110 sm:flex-none sm:px-8"
+                  disabled={saveState === "saving" || !organizationId}
+                  type="submit"
+                >
+                  <Save className="size-4" />
+                  {saveState === "saving" ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+            </div>
+          </form>
+        ) : null}
+
+        {activeTab === "Change Email" ? (
+          <form
+            className="grid gap-6 p-5 lg:grid-cols-[180px_1fr]"
+            onSubmit={(event) => {
+              event.preventDefault();
+              const parsedEmail = emailChangeSchema.safeParse({ newEmail });
+
+              if (!parsedEmail.success) {
+                setEmailChangeState("error");
+                toast.error(
+                  getValidationMessage(
+                    parsedEmail,
+                    "Please enter a valid email address.",
+                  ),
+                );
+                return;
+              }
+
+              const toastId = toast.loading("Requesting email change...");
+              setEmailChangeState("sending");
+              requestEmailChange(parsedEmail.data.newEmail)
+                .then((result) => {
+                  setEmailChangeState("sent");
+                  toast.success(
+                    result.message ||
+                      "Check the new email address to verify this change.",
+                    { id: toastId },
+                  );
+                  setNewEmail("");
+                })
+                .catch((error: unknown) => {
+                  setEmailChangeState("error");
+                  toast.error(
+                    getErrorMessage(error, "Unable to request email change."),
+                    { id: toastId },
+                  );
+                });
+            }}
+          >
+            <div className="flex flex-col items-center gap-3 text-center">
+              <span className="flex size-20 items-center justify-center rounded-full border border-cyan-300/15 bg-cyan-400/8 text-cyan-200">
+                <ShieldCheck className="size-8" strokeWidth={1.7} />
+              </span>
+              <p className="max-w-44 text-xs leading-5 text-slate-500">
+                Email changes are applied after verification from the new
+                address.
+              </p>
+            </div>
+            <div className="grid gap-4">
+              <ProfileField label="Current Email">
+                <input
+                  className="profile-input opacity-75"
+                  readOnly
+                  type="email"
+                  value={email}
+                />
+              </ProfileField>
+              <ProfileField label="New Email">
+                <input
+                  className="profile-input"
+                  onChange={(event) => setNewEmail(event.target.value)}
+                  placeholder="name@example.com"
+                  required
+                  type="email"
+                  value={newEmail}
+                />
+              </ProfileField>
+              <div className="flex flex-wrap items-center gap-3 pt-1">
+                <button
+                  className="flex h-10 flex-1 items-center justify-center gap-2 rounded-md bg-gradient-to-r from-blue-500 to-indigo-600 px-4 text-xs font-semibold text-white shadow-[0_14px_32px_rgba(37,99,235,0.34)] transition hover:brightness-110 sm:flex-none sm:px-8"
+                  disabled={emailChangeState === "sending" || !newEmail}
+                  type="submit"
+                >
+                  <ShieldCheck className="size-4" />
+                  {emailChangeState === "sending"
+                    ? "Sending..."
+                    : "Request Email Change"}
+                </button>
+              </div>
+            </div>
+          </form>
+        ) : null}
+
+        {activeTab === "Change Password" ? (
+          <ProfilePlaceholder
+            action="Update Password"
+            description="Set a new password for this Sentinel account."
+            icon={KeyRound}
+            rows={["Current password", "New password", "Confirm new password"]}
+            type="password"
+          />
+        ) : null}
+
+        {activeTab === "Two-Factor Authentication" ? (
+          <ProfilePlaceholder
+            action="Enable Two-Factor Authentication"
+            description="Add a verification step for sensitive account access."
+            icon={ShieldCheck}
+            rows={[
+              "Authenticator app",
+              "Recovery codes",
+              `${roleLabel} access policy`,
+            ]}
+          />
+        ) : null}
+
+        {activeTab === "Sessions" ? (
+          <ProfilePlaceholder
+            action="Review Sessions"
+            description="Monitor recent sign-ins for this account."
+            icon={MonitorSmartphone}
+            rows={["Current browser", "Mobile device", "Last API session"]}
+          />
+        ) : null}
+      </Panel>
+    </div>
+  );
+}
+
+function ProfileField({
+  children,
+  label,
+}: {
+  children: React.ReactNode;
+  label: string;
+}) {
+  return (
+    <label className="grid gap-2">
+      <span className="text-[0.68rem] font-medium text-slate-400">{label}</span>
+      {children}
+    </label>
+  );
+}
+
+function ProfilePlaceholder({
+  action,
+  description,
+  icon: Icon,
+  rows,
+  type = "text",
+}: {
+  action: string;
+  description: string;
+  icon: LucideIcon;
+  rows: string[];
+  type?: string;
+}) {
+  return (
+    <div className="grid gap-6 p-5 lg:grid-cols-[180px_1fr]">
+      <div className="flex flex-col items-center gap-3 text-center">
+        <span className="flex size-20 items-center justify-center rounded-full border border-cyan-300/15 bg-cyan-400/8 text-cyan-200">
+          <Icon className="size-8" strokeWidth={1.7} />
+        </span>
+        <p className="max-w-40 text-xs leading-5 text-slate-500">
+          {description}
+        </p>
+      </div>
+      <div className="grid gap-4">
+        {rows.map((row) => (
+          <ProfileField key={row} label={row}>
+            <input className="profile-input" placeholder={row} type={type} />
+          </ProfileField>
+        ))}
+        <button
+          className="flex h-10 w-full items-center justify-center gap-2 rounded-md bg-gradient-to-r from-blue-500 to-indigo-600 px-4 text-xs font-semibold text-white shadow-[0_14px_32px_rgba(37,99,235,0.34)] transition hover:brightness-110 sm:w-fit sm:px-8"
+          type="button"
+        >
+          <UserCog className="size-4" />
+          {action}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function TopBar({ roleLabel }: { roleLabel: string }) {
   return (
     <header className="mb-5 grid gap-3 rounded-xl border border-cyan-300/10 bg-[#041225]/75 p-3 backdrop-blur lg:grid-cols-[minmax(260px,1fr)_auto_auto]">
       <label className="flex h-10 items-center gap-2 rounded-md border border-white/8 bg-slate-950/40 px-3 text-slate-500">
@@ -231,7 +775,11 @@ function TopBar({
   );
 }
 
-function OperationsDashboard({ role }: { role: Exclude<DashboardRole, "RESPONDER"> }) {
+function OperationsDashboard({
+  role,
+}: {
+  role: Exclude<DashboardRole, "RESPONDER">;
+}) {
   const isControl = role === "CONTROL_ROOM";
 
   return (
@@ -276,7 +824,9 @@ function MetricGrid({ role }: { role: DashboardRole }) {
           <div className="mt-3 flex items-end justify-between gap-3">
             <p className="text-2xl font-semibold text-white">{metric.value}</p>
             {metric.delta ? (
-              <span className={`text-xs font-semibold ${toneStyles[metric.tone]}`}>
+              <span
+                className={`text-xs font-semibold ${toneStyles[metric.tone]}`}
+              >
                 {metric.delta}
               </span>
             ) : null}
@@ -379,7 +929,10 @@ function LiveMap({ title, route = false }: { title: string; route?: boolean }) {
 
 function RouteLine() {
   const points = routePoints
-    .map((point) => `${Number.parseFloat(point.left)} ${Number.parseFloat(point.top)}`)
+    .map(
+      (point) =>
+        `${Number.parseFloat(point.left)} ${Number.parseFloat(point.top)}`,
+    )
     .join(", ");
 
   return (
@@ -500,7 +1053,10 @@ function IncidentTypes() {
               <span className="font-semibold text-white">{value}</span>
             </div>
             <div className="h-1.5 rounded-full bg-slate-800">
-              <div className={`h-full rounded-full ${color}`} style={{ width: value }} />
+              <div
+                className={`h-full rounded-full ${color}`}
+                style={{ width: value }}
+              />
             </div>
           </div>
         ))}
@@ -524,9 +1080,15 @@ function DispatchQueue() {
                 <MapPin className="size-4" />
               </span>
               <div>
-                <p className="text-xs font-semibold text-white">Incident {id}</p>
+                <p className="text-xs font-semibold text-white">
+                  Incident {id}
+                </p>
                 <p className="text-[0.65rem] text-slate-500">
-                  {index === 0 ? "Armed Robbery" : index === 1 ? "Store Break-in" : "Panic Alarm"}
+                  {index === 0
+                    ? "Armed Robbery"
+                    : index === 1
+                      ? "Store Break-in"
+                      : "Panic Alarm"}
                 </p>
               </div>
             </div>
@@ -557,7 +1119,9 @@ function RespondersOnline() {
               <span className="flex size-7 items-center justify-center rounded-full bg-slate-700 text-[0.62rem] text-white">
                 {responder.name.slice(-2)}
               </span>
-              <p className="text-xs font-semibold text-white">{responder.name}</p>
+              <p className="text-xs font-semibold text-white">
+                {responder.name}
+              </p>
             </div>
             <span
               className={`text-[0.64rem] font-semibold ${
@@ -602,7 +1166,9 @@ function AssignmentCard() {
       <SectionHeader title="Current Assignment" />
       <div className="mt-4">
         <p className="text-sm font-bold text-red-300">Incident #1248</p>
-        <h2 className="mt-2 text-2xl font-semibold text-white">Armed Robbery</h2>
+        <h2 className="mt-2 text-2xl font-semibold text-white">
+          Armed Robbery
+        </h2>
         <p className="mt-1 text-sm text-slate-400">Main Street, Sandton</p>
       </div>
       <div className="mt-6 grid grid-cols-2 divide-x divide-white/10 rounded-lg border border-white/8 bg-slate-950/28">
@@ -669,7 +1235,9 @@ function IncidentDetailsCard() {
             </span>
             <div>
               <p className="text-[0.66rem] text-slate-500">{label}</p>
-              <p className="text-xs font-semibold text-white">{value as string}</p>
+              <p className="text-xs font-semibold text-white">
+                {value as string}
+              </p>
             </div>
           </div>
         ))}
@@ -814,7 +1382,10 @@ function SectionHeader({ title, action }: { title: string; action?: string }) {
     <div className="flex items-center justify-between gap-3">
       <h2 className="text-sm font-semibold text-white">{title}</h2>
       {action ? (
-        <button className="text-[0.66rem] font-semibold text-blue-300" type="button">
+        <button
+          className="text-[0.66rem] font-semibold text-blue-300"
+          type="button"
+        >
           {action}
         </button>
       ) : null}

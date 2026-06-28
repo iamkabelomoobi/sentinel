@@ -21,6 +21,7 @@ export default async function DashboardPage() {
         email: session.user.email,
         role: session.user.role || "CLIENT",
         status: session.user.status,
+        image: session.user.image,
       }}
     />
   );

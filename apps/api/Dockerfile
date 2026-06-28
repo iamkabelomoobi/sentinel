@@ -62,3 +62,4 @@ RUN yarn workspaces focus api
 EXPOSE 4000
 
 CMD ["pm2-runtime", "infra/pm2/api.ecosystem.config.cjs"]
+

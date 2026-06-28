@@ -18,6 +18,7 @@ export type DashboardRole = "SUPER_ADMIN" | "CONTROL_ROOM" | "RESPONDER";
 export type NavItem = {
   label: string;
   icon: typeof Home;
+  href: string;
   roles: DashboardRole[];
 };
 
@@ -71,71 +72,85 @@ export const navItems: NavItem[] = [
   {
     label: "Dashboard",
     icon: Home,
+    href: "/dashboard",
     roles: ["SUPER_ADMIN", "CONTROL_ROOM", "RESPONDER"],
   },
   {
     label: "Incidents",
     icon: Siren,
+    href: "#",
     roles: ["SUPER_ADMIN", "CONTROL_ROOM"],
   },
   {
     label: "Dispatch",
     icon: RadioTower,
+    href: "#",
     roles: ["SUPER_ADMIN", "CONTROL_ROOM"],
   },
   {
     label: "Responders",
     icon: Users,
+    href: "#",
     roles: ["SUPER_ADMIN", "CONTROL_ROOM"],
   },
   {
     label: "Customers",
     icon: Users,
+    href: "#",
     roles: ["SUPER_ADMIN", "CONTROL_ROOM"],
   },
   {
     label: "Reports",
     icon: FileBarChart,
+    href: "#",
     roles: ["SUPER_ADMIN", "CONTROL_ROOM", "RESPONDER"],
   },
   {
     label: "Audit Logs",
     icon: ClipboardList,
+    href: "#",
     roles: ["SUPER_ADMIN", "CONTROL_ROOM"],
   },
   {
     label: "Notifications",
     icon: Bell,
+    href: "#",
     roles: ["SUPER_ADMIN", "CONTROL_ROOM"],
   },
   {
     label: "My Incidents",
     icon: Shield,
+    href: "#",
     roles: ["RESPONDER"],
   },
   {
     label: "Dispatches",
     icon: RadioTower,
+    href: "#",
     roles: ["RESPONDER"],
   },
   {
     label: "Messages",
     icon: MessageSquare,
+    href: "#",
     roles: ["RESPONDER"],
   },
   {
     label: "Profile",
     icon: User,
-    roles: ["RESPONDER"],
+    href: "/dashboard/profile",
+    roles: ["SUPER_ADMIN", "CONTROL_ROOM", "RESPONDER"],
   },
   {
     label: "Settings",
     icon: Settings,
+    href: "#",
     roles: ["SUPER_ADMIN", "CONTROL_ROOM", "RESPONDER"],
   },
   {
     label: "System Admin",
     icon: Headphones,
+    href: "#",
     roles: ["SUPER_ADMIN"],
   },
 ];
