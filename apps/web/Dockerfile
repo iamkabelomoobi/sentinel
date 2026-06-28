@@ -11,6 +11,7 @@ COPY apps/web/package.json apps/web/package.json
 COPY apps/api/package.json apps/api/package.json
 COPY apps/docs/package.json apps/docs/package.json
 COPY packages/eslint-config/package.json packages/eslint-config/package.json
+COPY packages/schemas/package.json packages/schemas/package.json
 COPY packages/typescript-config/package.json packages/typescript-config/package.json
 COPY packages/ui/package.json packages/ui/package.json
 
@@ -34,6 +35,7 @@ COPY --from=deps /app/package.json ./package.json
 COPY --from=deps /app/yarn.lock ./yarn.lock
 COPY . .
 
+RUN yarn workspace @sentinel/schemas build
 RUN yarn workspace web build
 
 FROM node:22-alpine AS runner

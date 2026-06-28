@@ -11,6 +11,7 @@ COPY apps/api/package.json apps/api/package.json
 COPY apps/docs/package.json apps/docs/package.json
 COPY apps/web/package.json apps/web/package.json
 COPY packages/eslint-config/package.json packages/eslint-config/package.json
+COPY packages/schemas/package.json packages/schemas/package.json
 COPY packages/typescript-config/package.json packages/typescript-config/package.json
 COPY packages/ui/package.json packages/ui/package.json
 
@@ -31,6 +32,7 @@ COPY --from=deps /app/package.json ./package.json
 COPY --from=deps /app/yarn.lock ./yarn.lock
 COPY . .
 
+RUN yarn workspace @sentinel/schemas build
 RUN yarn workspace api db:generate
 RUN yarn workspace api build
 
@@ -48,6 +50,7 @@ COPY apps/api/package.json apps/api/package.json
 COPY apps/docs/package.json apps/docs/package.json
 COPY apps/web/package.json apps/web/package.json
 COPY packages/eslint-config/package.json packages/eslint-config/package.json
+COPY packages/schemas/package.json packages/schemas/package.json
 COPY packages/typescript-config/package.json packages/typescript-config/package.json
 COPY packages/ui/package.json packages/ui/package.json
 
@@ -55,6 +58,7 @@ COPY --from=builder /app/apps/api/dist apps/api/dist
 COPY --from=builder /app/apps/api/generated apps/api/generated
 COPY --from=builder /app/apps/api/prisma apps/api/prisma
 COPY --from=builder /app/apps/api/prisma.config.ts apps/api/prisma.config.ts
+COPY --from=builder /app/packages/schemas/dist packages/schemas/dist
 COPY infra/pm2/api.ecosystem.config.cjs infra/pm2/api.ecosystem.config.cjs
 
 RUN yarn workspaces focus api
@@ -62,4 +66,3 @@ RUN yarn workspaces focus api
 EXPOSE 4000
 
 CMD ["pm2-runtime", "infra/pm2/api.ecosystem.config.cjs"]
-
