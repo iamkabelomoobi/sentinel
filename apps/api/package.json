@@ -25,6 +25,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@better-auth/core": "^1.6.22",
     "@better-auth/infra": "^0.3.2",
     "@better-auth/prisma-adapter": "^1.6.20",
     "@better-auth/utils": "^0.4.2",
