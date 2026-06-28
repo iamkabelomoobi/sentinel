@@ -2,7 +2,9 @@
 @import "tw-animate-css";
 
 @source "./**/*.{ts,tsx}";
-@source "../src/**/*.{ts,tsx}";
+@source "../components/**/*.{ts,tsx}";
+@source "../features/**/*.{ts,tsx}";
+@source "../lib/**/*.{ts,tsx}";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -161,4 +163,8 @@
 
 .auth-social-button {
   @apply flex h-10 items-center justify-center gap-2 rounded-md border border-white/10 bg-slate-950/28 px-4 text-sm font-medium text-slate-200 transition hover:border-cyan-300/35 hover:bg-cyan-300/5;
+}
+
+.profile-input {
+  @apply h-10 w-full rounded-md border border-white/8 bg-slate-950/35 px-3 text-xs text-slate-200 outline-none transition placeholder:text-slate-600 focus:border-cyan-300/55 focus:ring-2 focus:ring-cyan-300/10;
 }

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { Toaster } from "@/components/ui/sonner";
 import { QueryProvider } from "@/features/auth/components/query-provider";
 import "./globals.css";
 
@@ -39,7 +40,10 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} font-sans`}
     >
       <body>
-        <QueryProvider>{children}</QueryProvider>
+        <QueryProvider>
+          {children}
+          <Toaster position="top-right" richColors closeButton expand={false} />
+        </QueryProvider>
       </body>
     </html>
   );

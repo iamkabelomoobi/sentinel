@@ -1,3 +1,5 @@
+import type { SignUpInput } from "@sentinel/schemas/auth";
+
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 type AuthBody = Record<string, unknown>;
@@ -109,10 +111,10 @@ export const authApi = {
       body: jsonBody({ email, password }),
     });
   },
-  signUp(name: string, email: string, password: string) {
-    return authRequest("/api/auth/sign-up/email", {
+  signUp(input: SignUpInput) {
+    return authRequest("/api/registration/organization-admin", {
       method: "POST",
-      body: jsonBody({ name, email, password, role: "CLIENT" }),
+      body: jsonBody(input),
     });
   },
   requestPasswordReset(email: string, redirectTo: string) {

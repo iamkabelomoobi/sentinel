@@ -98,6 +98,9 @@ export const auth = betterAuth({
     provider: 'postgresql',
   }),
   user: {
+    changeEmail: {
+      enabled: true,
+    },
     additionalFields: {
       phone: {
         type: 'string',
@@ -132,7 +135,9 @@ export const auth = betterAuth({
         const verificationUrl = new URL(url);
         const callbackUrl = new URL('/sign-in', frontendUrl).toString();
 
-        verificationUrl.searchParams.set('callbackURL', callbackUrl);
+        if (!verificationUrl.searchParams.has('callbackURL')) {
+          verificationUrl.searchParams.set('callbackURL', callbackUrl);
+        }
 
         await queueAuthEmail({
           email: user.email,
@@ -264,7 +269,6 @@ export const auth = betterAuth({
     dash({
       apiKey: process.env.BETTER_AUTH_API_KEY,
     }),
-    nextCookies(),
     sentinel({
       apiKey: process.env.BETTER_AUTH_API_KEY,
       security: {
@@ -279,5 +283,6 @@ export const auth = betterAuth({
         },
       },
     }),
+    nextCookies(),
   ],
 });
