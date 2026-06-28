@@ -4,7 +4,7 @@ module.exports = {
       name: "sentinel-api",
 
       script: "./apps/api/dist/src/main.js",
-      cwd: "/root/sentinel",
+      cwd: "/app",
 
       instances: 1,
       exec_mode: "fork",

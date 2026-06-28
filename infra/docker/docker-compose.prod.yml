@@ -7,6 +7,9 @@ services:
     restart: unless-stopped
     env_file:
       - ../../apps/api/.env.production
+    environment:
+      NODE_ENV: production
+      PM2_MACHINE_NAME: sentinel-api
     ports:
       - "4000:4000"
     extra_hosts:
@@ -22,6 +25,9 @@ services:
     restart: unless-stopped
     env_file:
       - ../../apps/web/.env.production
+    environment:
+      NODE_ENV: production
+      PM2_MACHINE_NAME: sentinel-web
     ports:
       - "3000:3000"
     depends_on:
