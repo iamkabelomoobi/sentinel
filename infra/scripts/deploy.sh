@@ -24,6 +24,26 @@ COMPOSE_FILE="$ROOT_DIR/infra/docker/docker-compose.prod.yml"
 API_ENV_FILE="$ROOT_DIR/apps/api/.env.production"
 LAST_DEPLOYED_FILE="$ROOT_DIR/.last-deployed"
 
+wait_for_http() {
+  local url="$1"
+  local label="$2"
+  local attempts="${3:-30}"
+  local delay_seconds="${4:-2}"
+
+  for attempt in $(seq 1 "$attempts"); do
+    if curl --fail --silent --show-error --max-time 5 "$url" >/dev/null; then
+      echo "✅ $label is healthy"
+      return 0
+    fi
+
+    echo "⏳ Waiting for $label ($attempt/$attempts)..."
+    sleep "$delay_seconds"
+  done
+
+  echo "❌ $label did not become healthy: $url"
+  return 1
+}
+
 echo "🚀 Deploying $APP_NAME..."
 
 cd "$ROOT_DIR"
@@ -118,6 +138,9 @@ if [ "$deploy_api" = true ]; then
 
   echo "🚀 Starting API..."
   docker compose -f "$COMPOSE_FILE" up -d --no-deps api
+
+  echo "🧪 Checking local API upstream..."
+  wait_for_http "http://127.0.0.1:4000/" "Local API upstream"
 else
   echo "✅ No API changes detected"
 fi
@@ -131,6 +154,11 @@ fi
 
 if [ "$deploy_api" = false ] && [ "$deploy_web" = false ]; then
   echo "✅ No Docker app changes detected"
+fi
+
+if [ "$deploy_api" = true ] || [ "$deploy_nginx" = true ]; then
+  echo "🧪 Checking public API endpoint..."
+  wait_for_http "https://$DOMAIN_API/" "Public API endpoint" 10 3
 fi
 
 echo "🧹 Cleaning unused Docker images..."
