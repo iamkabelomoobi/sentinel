@@ -6,7 +6,7 @@ module.exports = {
       script: "./apps/api/dist/src/main.js",
       cwd: "/app",
 
-      instances: 1,
+      instances: 2,
       exec_mode: "fork",
 
       autorestart: true,
