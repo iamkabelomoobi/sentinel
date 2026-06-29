@@ -140,7 +140,7 @@ if [ "$deploy_api" = true ]; then
   docker compose -f "$COMPOSE_FILE" up -d --no-deps api
 
   echo "🧪 Checking local API upstream..."
-  wait_for_http "http://127.0.0.1:4000/" "Local API upstream"
+  wait_for_http "http://127.0.0.1:4000/health" "Local API upstream"
 else
   echo "✅ No API changes detected"
 fi
@@ -158,7 +158,7 @@ fi
 
 if [ "$deploy_api" = true ] || [ "$deploy_nginx" = true ]; then
   echo "🧪 Checking public API endpoint..."
-  wait_for_http "https://$DOMAIN_API/" "Public API endpoint" 10 3
+  wait_for_http "https://$DOMAIN_API/health" "Public API endpoint" 10 3
 fi
 
 echo "🧹 Cleaning unused Docker images..."
