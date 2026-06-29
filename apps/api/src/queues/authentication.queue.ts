@@ -2,23 +2,10 @@ import Queue from 'bull';
 
 import { applicationLogger } from '../common/logger/application-logger';
 import { EmailJob } from './email.job';
-
-function getRedisOptions() {
-  const redisUrl = process.env.REDIS_URL;
-
-  if (redisUrl) {
-    return redisUrl;
-  }
-
-  return {
-    host: process.env.REDIS_HOST || 'localhost',
-    port: Number(process.env.REDIS_PORT || 6379),
-    password: process.env.REDIS_PASSWORD || undefined,
-  };
-}
+import { buildRedisOptions } from './redis-options';
 
 const authenticationQueue = new Queue<EmailJob>('authenticationQueue', {
-  redis: getRedisOptions(),
+  redis: buildRedisOptions(process.env),
   defaultJobOptions: {
     attempts: 3,
     backoff: {
