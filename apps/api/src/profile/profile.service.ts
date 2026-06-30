@@ -8,6 +8,7 @@ import {
   type ProfileUpdateInput,
 } from '@sentinel/schemas/profile';
 
+import { applicationLogger } from '../common/logger/application-logger';
 import { PrismaService } from '../database/prisma.service';
 
 const organizationSelect = {
@@ -96,11 +97,23 @@ export class ProfileService {
       throw new BadRequestException('No profile changes provided');
     }
 
+    const changedFields = Object.keys(data);
+    const logContext = {
+      userId,
+      changedFields,
+      ...(data.organizationId ? { organizationId: data.organizationId } : {}),
+    };
+
+    await applicationLogger.info('Profile update requested', logContext);
+
     const user = await this.prisma.user.update({
       where: { id: userId },
       data,
       select: userProfileSelect,
     });
+
+    await applicationLogger.info('Profile updated successfully', logContext);
+
     const organizations = await this.listOrganizations();
 
     return { user, organizations };
