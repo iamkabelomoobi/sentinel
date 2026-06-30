@@ -5,6 +5,108 @@ jest.mock('../database/prisma.service', () => ({
   PrismaService: class PrismaService {},
 }));
 
+jest.mock('../common/logger/application-logger', () => ({
+  applicationLogger: {
+    info: jest.fn().mockResolvedValue(undefined),
+    error: jest.fn().mockResolvedValue(undefined),
+  },
+}));
+
+jest.mock('@sentinel/schemas/profile', () => ({
+  profileUpdateSchema: {
+    safeParse(input: unknown) {
+      if (!input || typeof input !== 'object' || Array.isArray(input)) {
+        return {
+          success: false,
+          error: { issues: [{ message: 'Invalid profile details' }] },
+        };
+      }
+
+      const value = input as {
+        name?: unknown;
+        phone?: unknown;
+        image?: unknown;
+        organizationId?: unknown;
+      };
+      const data: Record<string, unknown> = {};
+
+      if ('name' in value) {
+        if (typeof value.name !== 'string') {
+          return {
+            success: false,
+            error: { issues: [{ message: 'Name is required.' }] },
+          };
+        }
+
+        const name = value.name.trim();
+
+        if (name.length < 2) {
+          return {
+            success: false,
+            error: { issues: [{ message: 'Name is required.' }] },
+          };
+        }
+
+        data.name = name;
+      }
+
+      if ('phone' in value) {
+        data.phone =
+          typeof value.phone === 'string' ? value.phone.trim() : value.phone;
+      }
+
+      if ('image' in value) {
+        if (
+          value.image !== null &&
+          (typeof value.image !== 'string' ||
+            !/^data:image\/(?:png|jpeg|jpg|webp|gif);base64,[A-Za-z0-9+/]+={0,2}$/.test(
+              value.image.trim(),
+            ))
+        ) {
+          return {
+            success: false,
+            error: {
+              issues: [
+                {
+                  message:
+                    'Profile image must be a PNG, JPG, WebP, or GIF under 1MB.',
+                },
+              ],
+            },
+          };
+        }
+
+        data.image =
+          typeof value.image === 'string' ? value.image.trim() : value.image;
+      }
+
+      if ('organizationId' in value) {
+        if (
+          typeof value.organizationId !== 'string' ||
+          !value.organizationId.trim()
+        ) {
+          return {
+            success: false,
+            error: { issues: [{ message: 'Organization is required.' }] },
+          };
+        }
+
+        data.organizationId = value.organizationId.trim();
+      }
+
+      if (Object.keys(data).length === 0) {
+        return {
+          success: false,
+          error: { issues: [{ message: 'No profile changes provided.' }] },
+        };
+      }
+
+      return { success: true, data };
+    },
+  },
+}));
+
+import { applicationLogger } from '../common/logger/application-logger';
 import { PrismaService } from '../database/prisma.service';
 import { ProfileService } from './profile.service';
 
@@ -131,6 +233,22 @@ describe('ProfileService', () => {
       },
       select: expect.any(Object),
     });
+    expect(applicationLogger.info).toHaveBeenCalledWith(
+      'Profile update requested',
+      {
+        userId: 'user-1',
+        changedFields: ['name', 'phone', 'organizationId'],
+        organizationId: 'org-2',
+      },
+    );
+    expect(applicationLogger.info).toHaveBeenCalledWith(
+      'Profile updated successfully',
+      {
+        userId: 'user-1',
+        changedFields: ['name', 'phone', 'organizationId'],
+        organizationId: 'org-2',
+      },
+    );
   });
 
   it('updates a valid uploaded profile image data url', async () => {
@@ -173,9 +291,9 @@ describe('ProfileService', () => {
   });
 
   it('rejects a blank name update', async () => {
-    await expect(service.updateMe('user-1', { name: '   ' })).rejects.toBeInstanceOf(
-      BadRequestException,
-    );
+    await expect(
+      service.updateMe('user-1', { name: '   ' }),
+    ).rejects.toBeInstanceOf(BadRequestException);
     expect(prismaMock.user.update).not.toHaveBeenCalled();
   });
 
